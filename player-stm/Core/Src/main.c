@@ -702,6 +702,7 @@ void StartDefaultTask(void const * argument)
   			fpos += br;
   		}
 
+
 //  		if( br < AUDIO_BUFFER_SIZE/2 )
 //  		{
 //  			xprintf("stop at eof\n");
@@ -709,70 +710,6 @@ void StartDefaultTask(void const * argument)
 //  			player_state = 0;
 //  		}
   	}  //if(player_state)
-
-
-//	  char key = debug_inkey();
-//	   switch(key)
-//	   {
-//		  case 'w':
-//		  {
-//			   xprintf("write test\n");
-//
-//			   FRESULT res;
-//			   UINT bw;
-//			   FIL file;
-//
-//			   const char* text = "Linijka tekstu!\n";
-//
-//			   xprintf("f_open... ");
-//			   res = f_open(&file,"0:/test.txt",FA_WRITE|FA_OPEN_APPEND);
-//			   xprintf("res=%d\n",res);
-//			   f_disp_res(res);
-//
-//			   if(res) break;
-//
-//			   xprintf("f_write... ");
-//			   res = f_write(&file,text,strlen(text),&bw);
-//			   xprintf("res=%d, bw=%d\n",res,bw);
-//			   f_close(&file);
-//
-//			   break;
-//		  }
-//		  case 'r':
-//		  {
-//			   xprintf("read test!\n");
-//			   FIL file;
-//			   FRESULT res = f_open(&file,"0:/test.txt",FA_READ);
-//			   xprintf("f_open res=%d\n",res);
-//			   f_disp_res(res);
-//
-//			   if(res) break;
-//
-//			   const uint32_t BUF_SIZE = 64;
-//			   char buf[BUF_SIZE];
-//			   UINT br;
-//
-//			   xprintf("reading file contents:\n");
-//
-//			   do
-//			   {
-//				   res = f_read(&file,buf,BUF_SIZE,&br);
-//				   if((res == FR_OK) && (br))
-//				   {
-//						xprintf("chunk:\n");
-//						debug_dump(buf,br);
-//				   }
-//				   else
-//				   {
-//					   xprintf("f_read res=%d\n",res);
-//					   break;
-//				   }
-//
-//			   }while(br>0);
-//			   f_close(&file);
-//			   break;
-//		  }
-//	   }
 
 
   }
