@@ -42,9 +42,9 @@
  */
 
 #include <limits.h> /* for SIZE_MAX */
-#if HAVE_STDINT_H
+//#if HAVE_STDINT_H
 #include <stdint.h> /* for SIZE_MAX in case limits.h didn't get it */
-#endif
+//#endif
 #include <stdlib.h> /* for size_t, malloc(), etc */
 #include "share/compat.h"
 

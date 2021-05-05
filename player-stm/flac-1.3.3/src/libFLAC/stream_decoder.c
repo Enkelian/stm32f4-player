@@ -30,10 +30,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
-
+//#ifdef HAVE_CONFIG_H
+//#  include <config.h>
+//#endif
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h> /* for malloc() */
 #include <string.h> /* for memset/memcpy() */
@@ -595,8 +595,14 @@ static FLAC__StreamDecoderInitStatus init_file_internal_(
 
 	file = filename? flac_fopen(filename, "rb") : stdin;
 
-	if(0 == file)
+	xprintf("file %s\n", filename);
+
+
+	if(0 == file){
+		xprintf("fopen failed for some goddamn reason\n");
 		return FLAC__STREAM_DECODER_INIT_STATUS_ERROR_OPENING_FILE;
+
+	}
 
 	return init_FILE_internal_(decoder, file, write_callback, metadata_callback, error_callback, client_data, is_ogg);
 }

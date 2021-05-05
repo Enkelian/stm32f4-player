@@ -119,11 +119,11 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/player-stm/Drivers/BSP/STM32F4-Discovery}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/player-stm/libflac}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/player-stm/flac-1.3.3}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/player-stm/libflac/include}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/player-stm/flac-1.3.3/include}&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/player-stm/libflac/src/libFLAC/include}&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/player-stm/flac-1.3.3/src/libFLAC/include}&quot;"/>
                                     								
                                 </option>
                                 								
@@ -186,6 +186,8 @@
                         <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
                         						
                         <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="USB_HOST"/>
+                        						
+                        <entry excluding=".deps/|.libs/|ia32/|include/|bitmath.c|bitmath.lo|bitreader.lo|bitwriter.lo|cpu.lo|crc.lo|fixed_intrin_sse2.c|fixed_intrin_sse2.lo|fixed_intrin_ssse3.c|fixed_intrin_ssse3.lo|fixed.lo|flac.pc|flac.pc.in|float.c|float.lo|format.lo|libFLAC_dynamic.vcproj|libFLAC_dynamic.vcxproj|libFLAC_dynamic.vcxproj.filters|libFLAC_static.vcproj|libFLAC_static.vcxproj|libFLAC_static.vcxproj.filters|libFLAC.la|libFLAC.m4|libFLAC-static.la|lpc_intrin_avx2.c|lpc_intrin_avx2.lo|lpc_intrin_sse.c|lpc_intrin_sse.lo|lpc_intrin_sse2.c|lpc_intrin_sse2.lo|lpc_intrin_sse41.c|lpc_intrin_sse41.lo|lpc_intrin_vsx.c|lpc_intrin_vsx.lo|lpc.lo|Makefile|Makefile.am|Makefile.in|Makefile.lite|md5.lo|memory.lo|metadata_iterators.c|metadata_iterators.lo|metadata_object.c|metadata_object.lo|ogg_decoder_aspect.c|ogg_encoder_aspect.c|ogg_helper.c|ogg_mapping.c|stream_decoder.lo|stream_encoder_framing.c|stream_encoder_framing.lo|stream_encoder_intrin_avx2.c|stream_encoder_intrin_avx2.lo|stream_encoder_intrin_sse2.c|stream_encoder_intrin_sse2.lo|stream_encoder_intrin_ssse3.c|stream_encoder_intrin_ssse3.lo|stream_encoder.c|stream_encoder.lo|window.c|window.lo|windows_unicode_filenames.c" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="flac-1.3.3/src/libFLAC"/>
                         					
                     </sourceEntries>
                     				
@@ -428,5 +430,7 @@
         </configuration>
         	
     </storageModule>
+    	
+    <storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
     
 </cproject>

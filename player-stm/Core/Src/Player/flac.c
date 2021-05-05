@@ -12,6 +12,11 @@
 #include "FLAC/stream_decoder.h"
 #include "flac.h"
 
+static FLAC__StreamDecoderReadStatus read_callback(
+	    const FLAC__StreamDecoder *decoder,
+	    FLAC__byte *buffer,
+	    size_t *bytes,
+	    void *client_data);
 static FLAC__StreamDecoderWriteStatus write_callback(
 		const FLAC__StreamDecoder *decoder,
 		const FLAC__Frame *frame,
@@ -30,6 +35,7 @@ static FLAC__uint64 total_samples = 0;
 static unsigned sample_rate = 0;
 static unsigned channels = 0;
 static unsigned bps = 0;
+FIL file;
 
 //static FLAC__bool write_little_endian_uint16(FILE *f, FLAC__uint16 x) {
 //	return fputc(x, f) != EOF && fputc(x >> 8, f) != EOF;
@@ -60,30 +66,52 @@ int flac_example() {
 		return 1;
 	}
 
+
+	FRESULT res = f_open(&file, input_file, FA_READ);
+
+	UINT bytes_read;
+	int len = 10;
+	void * buf = malloc(len * sizeof(int));
+
+	FRESULT rc = f_read(&file, buf, (UINT) len, &bytes_read);
+
+	xprintf("%d bytes read", bytes_read);
+
+
 	(void) FLAC__stream_decoder_set_md5_checking(decoder, true);
 
-	init_status = FLAC__stream_decoder_init_file(
-			decoder,
-			input_file,
-			write_callback,
-			metadata_callback,
-			error_callback, /*client_data=*/
-			NULL);
+
+    init_status = FLAC__stream_decoder_init_stream(
+        decoder,
+		&read_callback,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        &write_callback,
+        &metadata_callback,
+        &error_callback,
+        NULL
+    );
 
 	if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
 		xprintf("ERROR: initializing decoder: %s\n", FLAC__StreamDecoderInitStatusString[init_status]);
 		ok = false;
 	}
 
-	if (ok) {
-		ok = FLAC__stream_decoder_process_until_end_of_stream(decoder);
-		xprintf("decoding: %s\n", ok ? "succeeded" : "FAILED");
-		xprintf("   state: %s\n", FLAC__StreamDecoderStateString[FLAC__stream_decoder_get_state(decoder)]);
-	}
-
 	FLAC__stream_decoder_delete(decoder);
 
 	return 0;
+}
+
+FLAC__StreamDecoderReadStatus read_callback(
+	    const FLAC__StreamDecoder *decoder,
+	    FLAC__byte *buffer,
+	    size_t *bytes,
+	    void *client_data) {
+
+    return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+
 }
 
 FLAC__StreamDecoderWriteStatus write_callback(
