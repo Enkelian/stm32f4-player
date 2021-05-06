@@ -35,7 +35,6 @@ static FLAC__uint64 total_samples = 0;
 static unsigned sample_rate = 0;
 static unsigned channels = 0;
 static unsigned bps = 0;
-FIL file;
 
 //static FLAC__bool write_little_endian_uint16(FILE *f, FLAC__uint16 x) {
 //	return fputc(x, f) != EOF && fputc(x >> 8, f) != EOF;
@@ -52,54 +51,106 @@ FIL file;
 //			fputc(x >> 24, f) != EOF;
 //}
 
-int flac_example() {
-	FLAC__bool ok = true;
-	FLAC__StreamDecoder *decoder = 0;
-	FLAC__StreamDecoderInitStatus init_status;
-//	FILE *fout;
+typedef struct Flac {
+	FLAC__StreamDecoder* decoder;
+	FIL* input;
+} Flac;
 
-	const char* input_file = "0:/barka.flac";
+Flac* Flac_Create() {
+	Flac* flac = (Flac*) malloc(sizeof(Flac*));
 
-	if ((decoder = FLAC__stream_decoder_new()) == NULL) {
+	// create an instance of a decoder with default settings
+	FLAC__StreamDecoder* decoder = (FLAC__StreamDecoder*) malloc(sizeof(FLAC__StreamDecoder*));
+	decoder = FLAC__stream_decoder_new();
+
+	if(decoder == NULL) {
 		xprintf("ERROR: allocating decoder\n");
-//		fclose(fout);
-		return 1;
+		return NULL;
 	}
 
+	// here FLAC_stream_decoder_set_* can be invoked to override default settings
 
-	FRESULT res = f_open(&file, input_file, FA_READ);
+	// TODO: investigate whether this one is needed
+//	(void) FLAC__stream_decoder_set_md5_checking(decoder, true);
 
-	UINT bytes_read;
-	int len = 10;
-	void * buf = malloc(len * sizeof(int));
+	flac->decoder = decoder;
 
-	FRESULT rc = f_read(&file, buf, (UINT) len, &bytes_read);
-
-	xprintf("%d bytes read", bytes_read);
-
-
-	(void) FLAC__stream_decoder_set_md5_checking(decoder, true);
-
-
-    init_status = FLAC__stream_decoder_init_stream(
+	// initialize the instance to validate the settings and prepare for decoding
+	// decode FLAC data from the client via callbacks
+	FLAC__StreamDecoderInitStatus init_status = FLAC__stream_decoder_init_stream(
         decoder,
 		&read_callback,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
+        NULL, // seek_callback
+        NULL, // tell_callback
+        NULL, // length_callback
+        NULL, // eof_callback
         &write_callback,
         &metadata_callback,
         &error_callback,
-        NULL
+        flac // client_data
     );
 
 	if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
 		xprintf("ERROR: initializing decoder: %s\n", FLAC__StreamDecoderInitStatusString[init_status]);
-		ok = false;
+		return NULL;
 	}
 
-	FLAC__stream_decoder_delete(decoder);
+	return flac;
+}
+
+void Flac_Delete(Flac* flac) {
+	if(flac != NULL) {
+		if(flac->decoder != NULL) {
+			// according to docs it is good practice to match every stream_decoder_init_* call with stream_decoder_finish
+			FLAC__stream_decoder_finish(flac->decoder);
+			FLAC__stream_decoder_delete(flac->decoder);
+		}
+		free(flac);
+	}
+}
+
+int flac_example() {
+	//	UINT bytes_read;
+	//	int len = 10;
+	//	void * buf = malloc(len * sizeof(int));
+	//
+	//	FRESULT rc = f_read(&file, buf, (UINT) len, &bytes_read);
+	//
+	//	xprintf("%d bytes read", bytes_read);
+
+	Flac* flac = Flac_Create();
+
+	const char* input_file = "0:/bububu.flac";
+	FIL* file = malloc(sizeof(FIL*));
+	FRESULT res = f_open(file, input_file, FA_READ);
+	if(res != FR_OK) {
+		xprintf("ERROR: cannot open file\n");
+		return 1;
+	}
+
+	flac->input = file;
+
+	/*
+	 * process the stream from the current location until the read callback returns
+	 * FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM or FLAC__STREAM_DECODER_READ_STATUS_ABORT
+	 * client will get one metadata, write, or error callback per metadata block, audio frame, or sync error, respectively
+	 */
+	FLAC__bool is_success = FLAC__stream_decoder_process_until_end_of_stream(flac->decoder);
+	if(!is_success) {
+		FLAC__StreamDecoderState state = FLAC__stream_decoder_get_state(flac->decoder);
+		xprintf("ERROR: while decoding stream: %s\n", FLAC__StreamDecoderStateString[state]);
+	} else {
+		xprintf("stream decoded successfully\n");
+	}
+
+//	if(!FLAC__stream_decoder_process_single(flac->decoder)) {
+//		FLAC__StreamDecoderState state = FLAC__stream_decoder_get_state(flac->decoder);
+//		xprintf("ERROR: while decoding frame: %s\n", FLAC__StreamDecoderStateString[state]);
+//	} else {
+//		xprintf("frame decoded successfully\n");
+//	}
+
+	Flac_Delete(flac);
 
 	return 0;
 }
@@ -109,9 +160,33 @@ FLAC__StreamDecoderReadStatus read_callback(
 	    FLAC__byte *buffer,
 	    size_t *bytes,
 	    void *client_data) {
+	xprintf("read_callback, bytes = %d\n", *bytes);
 
-    return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+	Flac* flac = (Flac*) client_data;
 
+    if (*bytes <= 0) {
+        return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
+    }
+
+    UINT bytes_read;
+    FRESULT rc = f_read(flac->input, buffer, (UINT) *bytes, &bytes_read);
+    if (rc != FR_OK) {
+        xprintf("ERROR: cannot read file\n");
+        return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
+    }
+
+    xprintf("read successful, %d bytes read\n", bytes_read);
+
+    if(bytes_read > 0) {
+    	*bytes = (size_t) bytes_read;
+        return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
+    } else if(bytes_read == 0) {
+    	*bytes = 0;
+        return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+    } else {
+    	*bytes = 0;
+        return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
+    }
 }
 
 FLAC__StreamDecoderWriteStatus write_callback(
@@ -120,34 +195,35 @@ FLAC__StreamDecoderWriteStatus write_callback(
 		const FLAC__int32 *const buffer[],
 		void *client_data) {
 //	FIL *f = (FIL*) client_data;
-	const FLAC__uint32 total_size = (FLAC__uint32) (total_samples * channels * (bps / 8));
-	size_t i;
-
-	(void) decoder;
-
-	if (total_samples == 0) {
-		xprintf("ERROR: this example only works for FLAC files that have a total_samples count in STREAMINFO\n");
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
-	if (channels != 2 || bps != 16) {
-		xprintf("ERROR: this example only supports 16bit stereo streams\n");
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
-	if (frame->header.channels != 2) {
-		xprintf("ERROR: This frame contains %d channels (should be 2)\n", frame->header.channels);
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
-	if (buffer[0] == NULL) {
-		xprintf("ERROR: buffer [0] is NULL\n");
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
-	if (buffer[1] == NULL) {
-		xprintf("ERROR: buffer [1] is NULL\n");
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
+	xprintf("write_callback\n");
+//	const FLAC__uint32 total_size = (FLAC__uint32) (total_samples * channels * (bps / 8));
+//	size_t i;
+//
+//	(void) decoder;
+//
+//	if (total_samples == 0) {
+//		xprintf("ERROR: this example only works for FLAC files that have a total_samples count in STREAMINFO\n");
+//		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+//	}
+//	if (channels != 2 || bps != 16) {
+//		xprintf("ERROR: this example only supports 16bit stereo streams\n");
+//		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+//	}
+//	if (frame->header.channels != 2) {
+//		xprintf("ERROR: This frame contains %d channels (should be 2)\n", frame->header.channels);
+//		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+//	}
+//	if (buffer[0] == NULL) {
+//		xprintf("ERROR: buffer [0] is NULL\n");
+//		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+//	}
+//	if (buffer[1] == NULL) {
+//		xprintf("ERROR: buffer [1] is NULL\n");
+//		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+//	}
 
 	/* write WAVE header before we write the first frame */
-	if (frame->header.number.sample_number == 0) {
+//	if (frame->header.number.sample_number == 0) {
 //		if (
 //			fwrite("RIFF", 1, 4, f) < 4 ||
 //			!write_little_endian_uint32(f, total_size + 36) ||
@@ -164,11 +240,11 @@ FLAC__StreamDecoderWriteStatus write_callback(
 //			xprintf("ERROR: write error\n");
 //			return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 //		}
-	}
+//	}
 
 	/* write decoded PCM samples */
-	for (i = 0; i < frame->header.blocksize; i++) {
-		xprintf("Frame no: %d\n", i);
+//	for (i = 0; i < frame->header.blocksize; i++) {
+//		xprintf("Frame no: %d\n", i);
 //		if (
 //			!write_little_endian_int16(f, (FLAC__int16) buffer[0][i]) || /* left channel */
 //			!write_little_endian_int16(f, (FLAC__int16) buffer[1][i]) /* right channel */
@@ -176,7 +252,7 @@ FLAC__StreamDecoderWriteStatus write_callback(
 //			xprintf("ERROR: write error\n");
 //			return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 //		}
-	}
+//	}
 
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
@@ -185,7 +261,8 @@ void metadata_callback(
 		const FLAC__StreamDecoder *decoder,
 		const FLAC__StreamMetadata *metadata,
 		void *client_data) {
-	(void) decoder, (void) client_data;
+//	(void) decoder, (void) client_data;
+	xprintf("metadata_callback\n");
 
 	/* print some stats */
 	if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO) {
@@ -195,10 +272,10 @@ void metadata_callback(
 		channels = metadata->data.stream_info.channels;
 		bps = metadata->data.stream_info.bits_per_sample;
 
+		xprintf("total samples  : %" PRIu64 "\n", total_samples);
 		xprintf("sample rate    : %u Hz\n", sample_rate);
 		xprintf("channels       : %u\n", channels);
 		xprintf("bits per sample: %u\n", bps);
-		xprintf("total samples  : %" PRIu64 "\n", total_samples);
 	}
 }
 
