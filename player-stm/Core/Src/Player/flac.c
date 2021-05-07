@@ -57,10 +57,10 @@ typedef struct Flac {
 } Flac;
 
 Flac* Flac_Create() {
-	Flac* flac = (Flac*) malloc(sizeof(Flac*));
+	Flac* flac = (Flac*) malloc(sizeof(Flac));
 
 	// create an instance of a decoder with default settings
-	FLAC__StreamDecoder* decoder = (FLAC__StreamDecoder*) malloc(sizeof(FLAC__StreamDecoder*));
+	FLAC__StreamDecoder* decoder;
 	decoder = FLAC__stream_decoder_new();
 
 	if(decoder == NULL) {
@@ -121,7 +121,7 @@ int flac_example() {
 	Flac* flac = Flac_Create();
 
 	const char* input_file = "0:/bububu.flac";
-	FIL* file = malloc(sizeof(FIL*));
+	FIL* file = malloc(sizeof(FIL));
 	FRESULT res = f_open(file, input_file, FA_READ);
 	if(res != FR_OK) {
 		xprintf("ERROR: cannot open file\n");
