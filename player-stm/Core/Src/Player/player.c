@@ -107,7 +107,6 @@ static void f_disp_res(FRESULT r) {
 
 void Player_Task() {
 	/* Infinite loop */
-
 	HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_RESET);
 
 	vTaskDelay(1000);

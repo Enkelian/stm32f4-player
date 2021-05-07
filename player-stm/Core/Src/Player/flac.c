@@ -71,7 +71,7 @@ Flac* Flac_Create() {
 	// here FLAC_stream_decoder_set_* can be invoked to override default settings
 
 	// TODO: investigate whether this one is needed
-//	(void) FLAC__stream_decoder_set_md5_checking(decoder, true);
+	//	(void) FLAC__stream_decoder_set_md5_checking(decoder, true);
 
 	flac->decoder = decoder;
 
@@ -120,7 +120,7 @@ int flac_example() {
 
 	Flac* flac = Flac_Create();
 
-	const char* input_file = "0:/bububu.flac";
+	const char* input_file = "0:/barka.flac";
 	FIL* file = malloc(sizeof(FIL));
 	FRESULT res = f_open(file, input_file, FA_READ);
 	if(res != FR_OK) {
@@ -191,11 +191,11 @@ FLAC__StreamDecoderReadStatus read_callback(
 
 FLAC__StreamDecoderWriteStatus write_callback(
 		const FLAC__StreamDecoder *decoder,
-		const FLAC__Frame *frame,
-		const FLAC__int32 *const buffer[],
+		const FLAC__Frame *frame, // description of the decoded frame
+		const FLAC__int32 *const buffer[], // array of pointers to decoded channels of data
 		void *client_data) {
-//	FIL *f = (FIL*) client_data;
 	xprintf("write_callback\n");
+	Flac* flac = (Flac*) client_data;
 //	const FLAC__uint32 total_size = (FLAC__uint32) (total_samples * channels * (bps / 8));
 //	size_t i;
 //
