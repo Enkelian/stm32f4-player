@@ -595,13 +595,8 @@ static FLAC__StreamDecoderInitStatus init_file_internal_(
 
 	file = filename? flac_fopen(filename, "rb") : stdin;
 
-	xprintf("file %s\n", filename);
-
-
 	if(0 == file){
-		xprintf("fopen failed for some goddamn reason\n");
 		return FLAC__STREAM_DECODER_INIT_STATUS_ERROR_OPENING_FILE;
-
 	}
 
 	return init_FILE_internal_(decoder, file, write_callback, metadata_callback, error_callback, client_data, is_ogg);
