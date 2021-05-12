@@ -35,6 +35,7 @@ static FLAC__uint64 total_samples = 0;
 static unsigned sample_rate = 0;
 static unsigned channels = 0;
 static unsigned bps = 0;
+static FIL file;
 
 //static FLAC__bool write_little_endian_uint16(FILE *f, FLAC__uint16 x) {
 //	return fputc(x, f) != EOF && fputc(x >> 8, f) != EOF;
@@ -52,8 +53,11 @@ static unsigned bps = 0;
 //}
 
 
+
+static Flac flac;
+
 Flac* Flac_Create() {
-	Flac* flac = (Flac*) malloc(sizeof(Flac));
+//	Flac* flac = (Flac*) malloc(sizeof(Flac));
 
 	// create an instance of a decoder with default settings
 	FLAC__StreamDecoder* decoder;
@@ -68,7 +72,7 @@ Flac* Flac_Create() {
 	// TODO: investigate whether this one is needed
 	//	(void) FLAC__stream_decoder_set_md5_checking(decoder, true);
 
-	flac->decoder = decoder;
+	flac.decoder = decoder;
 
 	// initialize the instance to validate the settings and prepare for decoding
 	// decode FLAC data from the client via callbacks
@@ -82,7 +86,7 @@ Flac* Flac_Create() {
         &write_callback,
         &metadata_callback,
         &error_callback,
-        flac // client_data
+        &flac // client_data
     );
 
 	if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
@@ -90,7 +94,7 @@ Flac* Flac_Create() {
 		return NULL;
 	}
 
-	return flac;
+	return &flac;
 }
 
 void Flac_Delete(Flac* flac) {
@@ -134,26 +138,32 @@ int flac_example() {
 	//
 	//	xprintf("%d bytes read", bytes_read);
 
-	Flac* flac = Flac_Create();
+	Flac_Create();
 
+<<<<<<< HEAD
 	const char* input_file = "0:/barka.flac";
 	FIL* file = malloc(sizeof(FIL));
 	FRESULT res = f_open(file, input_file, FA_READ);
+=======
+	const char* input_file = "0:/bububu.flac";
+//	FIL* file = malloc(sizeof(FIL));
+	FRESULT res = f_open(&file, input_file, FA_READ);
+>>>>>>> branch 'flac' of https://github.com/Enkelian/stm32f4-player.git
 	if(res != FR_OK) {
 		xprintf("ERROR: cannot open file\n");
 		return 1;
 	}
 
-	flac->input = file;
+	flac.input = &file;
 
 	/*
 	 * process the stream from the current location until the read callback returns
 	 * FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM or FLAC__STREAM_DECODER_READ_STATUS_ABORT
 	 * client will get one metadata, write, or error callback per metadata block, audio frame, or sync error, respectively
 	 */
-	FLAC__bool is_success = FLAC__stream_decoder_process_until_end_of_stream(flac->decoder);
+	FLAC__bool is_success = FLAC__stream_decoder_process_until_end_of_stream(flac.decoder);
 	if(!is_success) {
-		FLAC__StreamDecoderState state = FLAC__stream_decoder_get_state(flac->decoder);
+		FLAC__StreamDecoderState state = FLAC__stream_decoder_get_state(flac.decoder);
 		xprintf("ERROR: while decoding stream: %s\n", FLAC__StreamDecoderStateString[state]);
 	} else {
 		xprintf("stream decoded successfully\n");
@@ -166,7 +176,7 @@ int flac_example() {
 //		xprintf("frame decoded successfully\n");
 //	}
 
-	Flac_Delete(flac);
+//	Flac_Delete(flac);
 
 	return 0;
 }
@@ -178,14 +188,14 @@ FLAC__StreamDecoderReadStatus read_callback(
 	    void *client_data) {
 //	xprintf("read_callback, bytes = %d\n", *bytes);
 
-	Flac* flac = (Flac*) client_data;
+//	Flac* flac = (Flac*) client_data;
 
     if (*bytes <= 0) {
         return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
     }
 
     UINT bytes_read;
-    FRESULT rc = f_read(flac->input, buffer, (UINT) *bytes, &bytes_read);
+    FRESULT rc = f_read(flac.input, buffer, (UINT) *bytes, &bytes_read);
     if (rc != FR_OK) {
         xprintf("ERROR: cannot read file\n");
         return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
