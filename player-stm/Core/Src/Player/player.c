@@ -3,16 +3,22 @@
 #include "usbh_platform.h"
 #include "stm32f4_discovery_audio.h"
 #include "flac.h"
+#include "flac_adapter.h"
 
-FIL file;
-const char *FNAME = "barka.wav";
 extern ApplicationTypeDef Appli_state;
 extern USBH_HandleTypeDef hUsbHostHS;
 enum {
 	BUFFER_OFFSET_NONE = 0, BUFFER_OFFSET_HALF, BUFFER_OFFSET_FULL,
 };
+
 #define AUDIO_BUFFER_SIZE 4096
 uint8_t buff[AUDIO_BUFFER_SIZE];
+
+static FIL file;
+static Flac* flac;
+static FlacAdapter flac_adapter;
+
+const char *FNAME = "barka.wav";
 static uint8_t player_state = 0;
 static uint8_t buf_offs = BUFFER_OFFSET_NONE;
 static uint32_t fpos = 0;
@@ -105,21 +111,71 @@ static void f_disp_res(FRESULT r) {
 	}
 }
 
+void Player_Setup() {
+	xprintf("Initializing audio...\n");
+	if(BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_AUTO, 70, 44100)) {
+		xprintf("ERROR: cannot initialize audio\n");
+		while(1);
+	}
+	xprintf("Initializing audio OK\n");
+
+	xprintf("Opening file...\n");
+	FRESULT res = f_open(&file, "bububu.flac", FA_READ);
+	if(res != FR_OK) {
+		xprintf("ERROR: cannot open file\n");
+		while(1);
+	}
+	xprintf("Opening file OK\n");
+
+   	flac = Flac_Create();
+   	flac->input = &file;
+   	flac_adapter = FlacAdapter_Create(flac);
+}
+
 void Player_Task() {
 	/* Infinite loop */
 	HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_RESET);
 
 	vTaskDelay(1000);
 
-	xprintf("waiting for USB mass storage\n");
+	xprintf("Waiting for USB mass storage");
 
 	do {
 		xprintf(".");
 		vTaskDelay(250);
 	} while (Appli_state != APPLICATION_READY);
+	xprintf("\n");
 
-	flac_example();
+	Player_Setup();
+
+	xprintf("Decoding metadata...\n");
+	if(Flac_GetMetadata(flac)) {
+		xprintf("ERROR: decoding metadata\n");
+		while(1);
+	}
+	xprintf("Decoding metadata OK\n");
+
+	BSP_AUDIO_OUT_Play((uint16_t*) &buff[0], AUDIO_BUFFER_SIZE);
+	buf_offs = BUFFER_OFFSET_NONE;
+
+	while(1) {
+		if (buf_offs == BUFFER_OFFSET_HALF) {
+			FlacAdapter_Get(&flac_adapter, &buff[0], AUDIO_BUFFER_SIZE / 2);
+			buf_offs = BUFFER_OFFSET_NONE;
+		}
+
+		if (buf_offs == BUFFER_OFFSET_FULL) {
+			FlacAdapter_Get(&flac_adapter, &buff[AUDIO_BUFFER_SIZE / 2], AUDIO_BUFFER_SIZE / 2);
+			buf_offs = BUFFER_OFFSET_NONE;
+		}
+
+	}
+
 	while(1);
+
+
+
+
 
 	FRESULT res = f_open(&file, "0:/barka.wav", FA_READ);
 
