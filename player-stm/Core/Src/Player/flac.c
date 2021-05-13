@@ -140,19 +140,10 @@ int flac_example() {
 
 	Flac_Create();
 
-<<<<<<< HEAD
 	const char* input_file = "0:/barka.flac";
 	FIL* file = malloc(sizeof(FIL));
 	FRESULT res = f_open(file, input_file, FA_READ);
-=======
-	const char* input_file = "0:/bububu.flac";
-//	FIL* file = malloc(sizeof(FIL));
-	FRESULT res = f_open(&file, input_file, FA_READ);
->>>>>>> branch 'flac' of https://github.com/Enkelian/stm32f4-player.git
-	if(res != FR_OK) {
-		xprintf("ERROR: cannot open file\n");
-		return 1;
-	}
+
 
 	flac.input = &file;
 
