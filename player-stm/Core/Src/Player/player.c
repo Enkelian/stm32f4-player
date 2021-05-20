@@ -15,6 +15,7 @@ enum {
 uint8_t buff[AUDIO_BUFFER_SIZE];
 
 static FIL file;
+static FIL out_file;
 static Flac* flac;
 static FlacAdapter flac_adapter;
 
@@ -120,15 +121,23 @@ void Player_Setup() {
 	xprintf("Initializing audio OK\n");
 
 	xprintf("Opening file...\n");
-	FRESULT res = f_open(&file, "bububu.flac", FA_READ);
+	FRESULT res = f_open(&file, "sine.flac", FA_READ);
 	if(res != FR_OK) {
 		xprintf("ERROR: cannot open file\n");
 		while(1);
 	}
 	xprintf("Opening file OK\n");
 
+	res = f_open(&out_file, "sine_new.wav", FA_WRITE | FA_CREATE_ALWAYS);
+	if(res != FR_OK) {
+		xprintf("ERROR: cannot open file\n");
+		while(1);
+	}
+
+
    	flac = Flac_Create();
    	flac->input = &file;
+   	flac->output = &out_file;
    	flac_adapter = FlacAdapter_Create(flac);
 }
 
@@ -155,8 +164,13 @@ void Player_Task() {
 	}
 	xprintf("Decoding metadata OK\n");
 
+
+//	FLAC__stream_decoder_process_until_end_of_stream(flac->decoder);
+//	while(1);
+
+	FlacAdapter_Get(&flac_adapter, &buff[0], AUDIO_BUFFER_SIZE / 2);
 	BSP_AUDIO_OUT_Play((uint16_t*) &buff[0], AUDIO_BUFFER_SIZE);
-	buf_offs = BUFFER_OFFSET_NONE;
+	buf_offs = BUFFER_OFFSET_FULL;
 
 	while(1) {
 		if (buf_offs == BUFFER_OFFSET_HALF) {
@@ -168,6 +182,7 @@ void Player_Task() {
 			FlacAdapter_Get(&flac_adapter, &buff[AUDIO_BUFFER_SIZE / 2], AUDIO_BUFFER_SIZE / 2);
 			buf_offs = BUFFER_OFFSET_NONE;
 		}
+//		vTaskDelay(1);
 
 	}
 

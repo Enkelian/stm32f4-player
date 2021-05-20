@@ -13,10 +13,13 @@ typedef struct FlacFrame {
 typedef struct Flac {
 	FLAC__StreamDecoder* decoder;
 	FIL* input;
+	FIL* output;
 	FlacFrame* read_frame;
 } Flac;
 
 Flac* Flac_Create();
 void Flac_Delete(Flac* flac);
 int Flac_GetMetadata(Flac* flac);
-int Flac_GetFrame(Flac* flac, FlacFrame** frame);
+int Flac_GetFrame(Flac* flac
+//		, FlacFrame** frame
+		);
