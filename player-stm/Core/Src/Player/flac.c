@@ -55,10 +55,10 @@ static unsigned bps = 0;
 
 
 
-//static Flac flac;
+static Flac flac;
 
 Flac* Flac_Create() {
-	Flac* flac = (Flac*) malloc(sizeof(Flac));
+//	Flac* flac = (Flac*) malloc(sizeof(Flac));
 
 	// create an instance of a decoder with default settings
 	FLAC__StreamDecoder* decoder;
@@ -73,8 +73,8 @@ Flac* Flac_Create() {
 	// TODO: investigate whether this one is needed
 	//	(void) FLAC__stream_decoder_set_md5_checking(decoder, true);
 
-	flac->decoder = decoder;
-	flac->read_frame = NULL;
+	flac.decoder = decoder;
+	flac.read_frame = NULL;
 
 	// initialize the instance to validate the settings and prepare for decoding
 	// decode FLAC data from the client via callbacks
@@ -88,7 +88,7 @@ Flac* Flac_Create() {
         &write_callback,
         &metadata_callback,
         &error_callback,
-        flac // client_data
+        &flac // client_data
     );
 
 	if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
@@ -96,7 +96,7 @@ Flac* Flac_Create() {
 		return NULL;
 	}
 
-	return flac;
+	return &flac;
 }
 
 void Flac_Delete(Flac* flac) {
@@ -235,6 +235,10 @@ FLAC__StreamDecoderWriteStatus write_callback(
 		const FLAC__Frame *frame, // description of the decoded frame
 		const FLAC__int32 *const buffer[], // array of pointers to decoded channels of data
 		void *client_data) {
+
+//   HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+//   HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+
 //	xprintf("write_callback\n");
 	Flac* flac = (Flac*) client_data;
 
@@ -258,6 +262,9 @@ FLAC__StreamDecoderWriteStatus write_callback(
         .data = malloc(size)
     };
 
+
+
+
     for (int sample = 0; sample < samples; sample++) {
         for (int channel = 0; channel < channels; channel++) {
             for (int byte = 0; byte < bytes_per_sample; byte++) {
@@ -267,26 +274,29 @@ FLAC__StreamDecoderWriteStatus write_callback(
         }
     }
 
-    const FLAC__uint32 total_size = (FLAC__uint32)(total_samples * channels * (bps/8));
+//    const FLAC__uint32 total_size = (FLAC__uint32)(total_samples * channels * (bps/8));
+//
+//    	if (frame->header.number.sample_number == 0) {
+//    		if (
+//    			f_write(flac->output, "RIFF", 4, NULL) != FR_OK ||
+//    			!write_little_endian_uint32(flac->output, total_size + 36) ||
+//    			f_write(flac->output, "WAVEfmt ", 8, NULL) != FR_OK ||
+//    			!write_little_endian_uint32(flac->output, 16) ||
+//    			!write_little_endian_uint16(flac->output, 1) ||
+//    			!write_little_endian_uint16(flac->output, (FLAC__uint16) channels) ||
+//    			!write_little_endian_uint32(flac->output, sample_rate) ||
+//    			!write_little_endian_uint32(flac->output, sample_rate * channels * (bps / 8)) ||
+//    			!write_little_endian_uint16(flac->output, (FLAC__uint16) (channels * (bps / 8))) || /* block align */
+//    			!write_little_endian_uint16(flac->output, (FLAC__uint16) bps) ||
+//    			f_write(flac->output, "data", 4, NULL) != FR_OK ||
+//    			!write_little_endian_uint32(flac->output, total_size)) {
+//    			xprintf("ERROR: write error\n");
+//    			return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+//    		}
+//    	}
+//	   HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+//	   HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 
-    	if (frame->header.number.sample_number == 0) {
-    		if (
-    			f_write(flac->output, "RIFF", 4, NULL) != FR_OK ||
-    			!write_little_endian_uint32(flac->output, total_size + 36) ||
-    			f_write(flac->output, "WAVEfmt ", 8, NULL) != FR_OK ||
-    			!write_little_endian_uint32(flac->output, 16) ||
-    			!write_little_endian_uint16(flac->output, 1) ||
-    			!write_little_endian_uint16(flac->output, (FLAC__uint16) channels) ||
-    			!write_little_endian_uint32(flac->output, sample_rate) ||
-    			!write_little_endian_uint32(flac->output, sample_rate * channels * (bps / 8)) ||
-    			!write_little_endian_uint16(flac->output, (FLAC__uint16) (channels * (bps / 8))) || /* block align */
-    			!write_little_endian_uint16(flac->output, (FLAC__uint16) bps) ||
-    			f_write(flac->output, "data", 4, NULL) != FR_OK ||
-    			!write_little_endian_uint32(flac->output, total_size)) {
-    			xprintf("ERROR: write error\n");
-    			return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-    		}
-    	}
 
 
 //        int written;

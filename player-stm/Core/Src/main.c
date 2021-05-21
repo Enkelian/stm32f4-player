@@ -529,6 +529,8 @@ void StartDefaultTask(void const * argument)
 {
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
+
+
   /* USER CODE BEGIN 5 */
   Player_Task();
   /* USER CODE END 5 */

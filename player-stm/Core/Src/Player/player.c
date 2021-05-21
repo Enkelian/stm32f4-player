@@ -144,6 +144,7 @@ void Player_Setup() {
 void Player_Task() {
 	/* Infinite loop */
 	HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 
 	vTaskDelay(1000);
 
@@ -182,7 +183,6 @@ void Player_Task() {
 			FlacAdapter_Get(&flac_adapter, &buff[AUDIO_BUFFER_SIZE / 2], AUDIO_BUFFER_SIZE / 2);
 			buf_offs = BUFFER_OFFSET_NONE;
 		}
-//		vTaskDelay(1);
 
 	}
 
@@ -192,7 +192,7 @@ void Player_Task() {
 
 
 
-	FRESULT res = f_open(&file, "0:/barka.wav", FA_READ);
+	FRESULT res = f_open(&file, "0:/sine_new.wav", FA_READ);
 
 	if (res == FR_OK) {
 		xprintf("wave file open OK\n");
