@@ -12,7 +12,7 @@ enum {
 };
 
 #define AUDIO_BUFFER_SIZE 4096
-uint8_t buff[AUDIO_BUFFER_SIZE];
+uint8_t buff[AUDIO_BUFFER_SIZE] __attribute__((section(".ccmram")));
 
 static FIL file;
 static FIL out_file;
@@ -171,7 +171,7 @@ void Player_Task() {
 
 	FlacAdapter_Get(&flac_adapter, &buff[0], AUDIO_BUFFER_SIZE / 2);
 	BSP_AUDIO_OUT_Play((uint16_t*) &buff[0], AUDIO_BUFFER_SIZE);
-	buf_offs = BUFFER_OFFSET_FULL;
+	buf_offs = BUFFER_OFFSET_HALF;
 
 	while(1) {
 		if (buf_offs == BUFFER_OFFSET_HALF) {
