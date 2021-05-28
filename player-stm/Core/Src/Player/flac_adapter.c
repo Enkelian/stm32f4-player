@@ -13,6 +13,7 @@ void FlacAdapter_Delete(FlacAdapter* adapter) {
 }
 
 int FlacAdapter_Get(FlacAdapter* adapter, void* target, int bytes) {
+	xprintf("FlacAdapter_Get\n");
 	//PROBABLY THE PROBLEM IS HERE
 	int read_bytes = 0;
    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
@@ -120,6 +121,6 @@ int FlacAdapter_Get(FlacAdapter* adapter, void* target, int bytes) {
    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 
-//	xprintf("%d of %d bytes read...\n", read_bytes, bytes);
+	xprintf("%d of %d bytes read...\n", read_bytes, bytes);
 	return read_bytes;
 }

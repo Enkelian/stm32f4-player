@@ -288,6 +288,7 @@ uint8_t BSP_AUDIO_OUT_Play(uint16_t* pBuffer, uint32_t Size)
   */
 void BSP_AUDIO_OUT_ChangeBuffer(uint16_t *pData, uint16_t Size)
 {
+	xprintf("BSP_AUDIO_OUT_ChangeBuffer\n");
   HAL_I2S_Transmit_DMA(&hAudioOutI2s, pData, Size); 
 }
 

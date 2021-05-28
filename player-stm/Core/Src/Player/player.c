@@ -30,7 +30,7 @@ static uint32_t fpos = 0;
  * @retval None
  */
 void BSP_AUDIO_OUT_HalfTransfer_CallBack(void) {
-//  xprintf("HalfTransfer_CallBack\n");
+  xprintf("HalfTransfer_CallBack\n");
 	buf_offs = BUFFER_OFFSET_HALF;
 }
 
@@ -40,7 +40,7 @@ void BSP_AUDIO_OUT_HalfTransfer_CallBack(void) {
  * @retval None
  */
 void BSP_AUDIO_OUT_TransferComplete_CallBack(void) {
-//  xprintf("TransferComplete_CallBack\n");
+  xprintf("TransferComplete_CallBack\n");
 	buf_offs = BUFFER_OFFSET_FULL;
 	BSP_AUDIO_OUT_ChangeBuffer((uint16_t*) &buff[0], AUDIO_BUFFER_SIZE / 2);
 }
@@ -168,10 +168,10 @@ void Player_Task() {
 
 //	FLAC__stream_decoder_process_until_end_of_stream(flac->decoder);
 //	while(1);
-
 	FlacAdapter_Get(&flac_adapter, &buff[0], AUDIO_BUFFER_SIZE / 2);
 	BSP_AUDIO_OUT_Play((uint16_t*) &buff[0], AUDIO_BUFFER_SIZE);
-	buf_offs = BUFFER_OFFSET_HALF;
+
+	buf_offs = BUFFER_OFFSET_FULL;
 
 	while(1) {
 		if (buf_offs == BUFFER_OFFSET_HALF) {

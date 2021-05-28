@@ -26,4 +26,13 @@ After including libFLAC, it became apparent that methods of memory allocation us
 
 Similar errors were encountered by developers using `newlib` library. The fix proposed [here](https://nadler.com/embedded/newlibAndFreeRTOS.html), which consists of replacing the automatically generated `sbrk` with specially prepared implementation, worked also in the case of `libFlac`. As a result, `malloc` and `free` functions could be used safely throughout the project.
 
-### 
+### Decoding FLAC
+
+### Encountered problems analysis
+Proposed decoding method, despite its logical correctness, seemed not to be working. Extensive tests were conveyed to identify the source of the problems. 
+
+Using Audacity, simple sample consisting of sinusoidal wave was created. Source code was altered to save the decoded samples to a WAVE file. Saving was performed at three different stages. Through saving the buffer before copying its contents to buffer used by BSP layer, signal identical with the test one was achieved. Only when saving the copied buffer, distortions were made visible in the result file. 
+![](./doc_res/generated.png)
+Signal generated in Audacity.
+![](./doc_res/decoded.png)
+Decoded signal - BSP buffer saved after copying decoded contents.
