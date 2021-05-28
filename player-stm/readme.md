@@ -43,14 +43,20 @@ for (int sample = 0; sample < samples; sample++) {
 ### Encountered problems
 Proposed decoding method, despite its logical correctness, seemed not to be working. Extensive tests were conveyed to identify the source of the problems. 
 
-Using Audacity, simple sample consisting of sinusoidal wave was created. Source code was altered to save the decoded samples to a WAVE file. Saving was performed at three different stages. Through saving the buffer before copying its contents to buffer used by BSP layer, signal identical with the test one was achieved. Only when saving the copied buffer, distortions were made visible in the result file. 
+Using Audacity, simple sample consisting of sinusoidal wave was created. Source code was altered to save the decoded samples to a WAVE file. Saving was performed at three different stages:
+* right after decoding
+* right before copying data to a buffer passed to BSP functions
+* right after copying data to a buffer passed to BSP functions
+
+Data saved using the first two approaches was identical with the input signal. Only when saving the copied buffer in the third case, the saved WAVE file contained noticeable distortions. 
 ![](./doc_res/generated.png)
 Signal generated in Audacity.
 ![](./doc_res/decoded.png)
 Decoded signal - BSP buffer saved after copying decoded contents.
 
-As mentioned earlier, if buffer was saved right after decoding, the output file contained signal identical with the generated sample. Based on that fact, a conclusion was made that the decoding and copying of the buffer is not as fast as transmitting the data via BSP functions. 
+As mentioned earlier, if buffer was saved right after decoding, the output file contained signal identical with the generated sample. Based on that fact, a conclusion was made that the decoding and copying of the buffer is not as fast as transmitting the data via BSP functions - data was not being supplied fast enough to be properly transmitted.
 
+Additional test using diodes was performed. LD3 was turned on whenever the processor was busy decoding and copying decoded data. Conversely, LD4 was turned off during that time. Results confirmed that most of the time, the processor was busy with decoding-related data manipulation.
 ### Proposed solutions
 A conclusion was made that to achieve a working player, a higher speed of data manipulation is necessary.
 
