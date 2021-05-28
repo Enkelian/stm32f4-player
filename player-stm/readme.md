@@ -27,8 +27,20 @@ After including libFLAC, it became apparent that methods of memory allocation us
 Similar errors were encountered by developers using `newlib` library. The fix proposed [here](https://nadler.com/embedded/newlibAndFreeRTOS.html), which consists of replacing the automatically generated `sbrk` with specially prepared implementation, worked also in the case of `libFlac`. As a result, `malloc` and `free` functions could be used safely throughout the project.
 
 ### Decoding FLAC
+Code responsible for decoding FLAC data is implemented in `write_callback` function.
 
-### Encountered problems analysis
+```c
+for (int sample = 0; sample < samples; sample++) {
+    for (int channel = 0; channel < channels; channel++) {
+        for (int byte = 0; byte < bytes_per_sample; byte++) {
+            flac->read_frame->data[(sample * channels + channel) * bytes_per_sample + byte] =
+                (uint8_t)((buffer[channel][sample] >> (byte * 8)) & 0xFF);
+        }
+    }
+}
+```
+
+### Encountered problems
 Proposed decoding method, despite its logical correctness, seemed not to be working. Extensive tests were conveyed to identify the source of the problems. 
 
 Using Audacity, simple sample consisting of sinusoidal wave was created. Source code was altered to save the decoded samples to a WAVE file. Saving was performed at three different stages. Through saving the buffer before copying its contents to buffer used by BSP layer, signal identical with the test one was achieved. Only when saving the copied buffer, distortions were made visible in the result file. 
@@ -36,3 +48,28 @@ Using Audacity, simple sample consisting of sinusoidal wave was created. Source 
 Signal generated in Audacity.
 ![](./doc_res/decoded.png)
 Decoded signal - BSP buffer saved after copying decoded contents.
+
+As mentioned earlier, if buffer was saved right after decoding, the output file contained signal identical with the generated sample. Based on that fact, a conclusion was made that the decoding and copying of the buffer is not as fast as transmitting the data via BSP functions. 
+
+### Proposed solutions
+A conclusion was made that to achieve a working player, a higher speed of data manipulation is necessary.
+
+Our first attempt was to place the buffer in CCM memory. Linker script was edited by adding the following code in linker script:
+``` 
+.ccmram :
+{
+. = ALIGN(4);
+_sccmram = .;       /* create a global symbol at ccmram start */
+*(.ccmram)
+*(.ccmram*)
+. = ALIGN(4);
+_eccmram = .;       /* create a global symbol at ccmram end */
+} >CCMRAM AT> FLASH
+```
+Buffer declaration was annotated with `__attribute__((section(".ccmram")))`
+
+Despite the fact that memory was successfully being allocated in CCM memory, BSP callbacks regarding half and full buffer transfer were never getting called.
+
+![](./doc_res/scheme.png)
+Due to [STM32F407 Datasheet](https://www.st.com/resource/en/datasheet/dm00037051.pdf) even though CCM has a connection to data and instruction busses, it has no connection to DMA (more on that [here](https://electronics.stackexchange.com/questions/53827/using-ccm-core-coupled-memory-in-stm32f4xx)).
+
