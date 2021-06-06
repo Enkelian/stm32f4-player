@@ -12,7 +12,7 @@ enum {
 };
 
 #define AUDIO_BUFFER_UNIT_SIZE 2048
-#define AUDIO_BUFFER_UNIT_COUNT 8
+#define AUDIO_BUFFER_UNIT_COUNT 32
 #define AUDIO_BUFFER_SIZE (AUDIO_BUFFER_UNIT_COUNT * AUDIO_BUFFER_UNIT_SIZE)
 uint8_t buff[AUDIO_BUFFER_SIZE];
 
@@ -35,6 +35,9 @@ static uint8_t read_offset = 0;
  * @retval None
  */
 void BSP_AUDIO_OUT_HalfTransfer_CallBack(void) {
+	read_offset = (read_offset + 1) % AUDIO_BUFFER_UNIT_COUNT;
+	BSP_AUDIO_OUT_ChangeBuffer((uint16_t*) &buff[AUDIO_BUFFER_UNIT_SIZE * read_offset], AUDIO_BUFFER_UNIT_SIZE);
+
 //  xprintf("HalfTransfer_CallBack\n");
 //	buf_offs = BUFFER_OFFSET_HALF;
 }
@@ -130,25 +133,25 @@ void Player_Setup() {
 	xprintf("Initializing audio OK\n");
 
 //  uncomment the following to return to FLAC decoding
-//	xprintf("Opening file...\n");
-//	FRESULT res = f_open(&file, "sine.flac", FA_READ);
-//	if(res != FR_OK) {
-//		xprintf("ERROR: cannot open file\n");
-//		while(1);
-//	}
-//	xprintf("Opening file OK\n");
-//
+	xprintf("Opening file...\n");
+	FRESULT res = f_open(&file, "s.flac", FA_READ);
+	if(res != FR_OK) {
+		xprintf("ERROR: cannot open file\n");
+		while(1);
+	}
+	xprintf("Opening file OK\n");
+
 //	res = f_open(&out_file, "sine_new.wav", FA_WRITE | FA_CREATE_ALWAYS);
 //	if(res != FR_OK) {
 //		xprintf("ERROR: cannot open file\n");
 //		while(1);
 //	}
-//
-//
-//   	flac = Flac_Create();
-//   	flac->input = &file;
-//   	flac->output = &out_file;
-//   	flac_adapter = FlacAdapter_Create(flac);
+
+
+   	flac = Flac_Create();
+   	flac->input = &file;
+   	flac->output = &out_file;
+   	flac_adapter = FlacAdapter_Create(flac);
 }
 
 void Player_Task() {
@@ -169,31 +172,33 @@ void Player_Task() {
 	Player_Setup();
 
 //  uncomment the following to return to FLAC decoding
-//	xprintf("Decoding metadata...\n");
-//	if(Flac_GetMetadata(flac)) {
-//		xprintf("ERROR: decoding metadata\n");
-//		while(1);
-//	}
-//	xprintf("Decoding metadata OK\n");
+	xprintf("Decoding metadata...\n");
+	if(Flac_GetMetadata(flac)) {
+		xprintf("ERROR: decoding metadata\n");
+		while(1);
+	}
+	xprintf("Decoding metadata OK\n");
 
 
 //	FLAC__stream_decoder_process_until_end_of_stream(flac->decoder);
+//	xprintf("FLAC__stream_decoder_process_until_end_of_stream\n");
+
 //	while(1);
 
 // WAVE test start
-	FRESULT fr = f_open(&file, "0:/barka.wav", FA_READ);
-	f_disp_res(fr);
-	if (f_read(&file, &buff[0], AUDIO_BUFFER_SIZE, NULL) != FR_OK) {
-		xprintf("f_read error\n");
-	}
+//	FRESULT fr = f_open(&file, "0:/barka.wav", FA_READ);
+//	f_disp_res(fr);
+//	if (f_read(&file, &buff[0], AUDIO_BUFFER_SIZE, NULL) != FR_OK) {
+//		xprintf("f_read error\n");
+//	}
 // WAVE test end
 
 
 //  uncomment the following to return to FLAC decoding
-//	FlacAdapter_Get(&flac_adapter, &buff[0], AUDIO_BUFFER_SIZE);
+	FlacAdapter_Get(&flac_adapter, &buff[0], AUDIO_BUFFER_SIZE);
 	write_offset = 0;
 
-	xprintf("buffer initially full\n");
+//	xprintf("buffer initially full\n");
 
 
 	BSP_AUDIO_OUT_Play((uint16_t*) &buff[0], AUDIO_BUFFER_UNIT_SIZE);
@@ -205,13 +210,13 @@ void Player_Task() {
 		if(write_offset != read_offset) {
 //			xprintf("writeoffset=%d\n", write_offset);
 // WAVE test start
-			if (f_read(&file, &buff[write_offset * AUDIO_BUFFER_UNIT_SIZE], AUDIO_BUFFER_UNIT_SIZE, NULL) != FR_OK) {
-				BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW);
-				xprintf("f_read error\n");
-			}
+//			if (f_read(&file, &buff[write_offset * AUDIO_BUFFER_UNIT_SIZE], AUDIO_BUFFER_UNIT_SIZE, NULL) != FR_OK) {
+//				BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW);
+//				xprintf("f_read error\n");
+//			}
 // WAVE test end
 //  uncomment the following to return to FLAC decoding
-//			FlacAdapter_Get(&flac_adapter, &buff[write_offset * AUDIO_BUFFER_UNIT_SIZE], AUDIO_BUFFER_UNIT_SIZE);
+			FlacAdapter_Get(&flac_adapter, &buff[write_offset * AUDIO_BUFFER_UNIT_SIZE], AUDIO_BUFFER_UNIT_SIZE);
 			write_offset = (write_offset + 1) % AUDIO_BUFFER_UNIT_COUNT;
 		}
 

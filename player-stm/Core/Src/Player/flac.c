@@ -122,9 +122,15 @@ int Flac_GetFrame(Flac* flac
 //		, FlacFrame** frame
 		) {
 	if(!FLAC__stream_decoder_process_single(flac->decoder)) {
+		xprintf("FLAC__stream_decoder_process_single=false\n");
+		xprintf("ERROR: reading frame: %s\n",
+		                  FLAC__StreamDecoderStateString[FLAC__stream_decoder_get_state(flac->decoder)]);
 		return 1;
 	}
 	if(flac->read_frame == NULL) {
+		xprintf("ERROR: reading frame: %s\n",
+		                  FLAC__StreamDecoderStateString[FLAC__stream_decoder_get_state(flac->decoder)]);
+		xprintf("read_frame is null\n");
 		return 1;
 	}
 
