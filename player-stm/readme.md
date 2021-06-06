@@ -26,8 +26,8 @@ After including libFLAC, it became apparent that methods of memory allocation us
 
 Similar errors were encountered by developers using `newlib` library. The fix proposed [here](https://nadler.com/embedded/newlibAndFreeRTOS.html), which consists of replacing the automatically generated `sbrk` with specially prepared implementation, worked also in the case of `libFlac`. As a result, `malloc` and `free` functions could be used safely throughout the project.
 
-### Decoding FLAC
-Code responsible for decoding FLAC data is implemented in `write_callback` function.
+### Converting FLAC to WAVE
+Code responsible for converting decoded FLAC data to WAVE is implemented in `write_callback` function.
 
 ```c
 for (int sample = 0; sample < samples; sample++) {
@@ -39,6 +39,14 @@ for (int sample = 0; sample < samples; sample++) {
     }
 }
 ```
+
+`buffer` here is array of pointers to decoded channels of data. It is provided by libFLAC via `write_callback`.
+`samples`, `channels` and `bytes_per_sample` are self-explanatory values derived from header of decoded frame. 
+Basically these loops just go through every byte of every channel in every sample and save it one by one to 
+one-dimensional array, contents of which are later copied to audio buffer. It is worth noting that `buffer`
+contains 32-bit integers, and we need 8-bit ones, so we save each relevant byte separately using
+bitwise shift and bitwise AND operations.
+
 
 ### Encountered problems
 Proposed decoding method, despite its logical correctness, seemed not to be working. Extensive tests were conveyed to identify the source of the problems. 
@@ -79,3 +87,15 @@ Despite the fact that memory was successfully being allocated in CCM memory, BSP
 ![](./doc_res/scheme.png)
 Due to [STM32F407 Datasheet](https://www.st.com/resource/en/datasheet/dm00037051.pdf) even though CCM has a connection to data and instruction busses, it has no connection to DMA (more on that [here](https://electronics.stackexchange.com/questions/53827/using-ccm-core-coupled-memory-in-stm32f4xx)).
 
+### Circular buffer
+
+Our second attempt was to expand buffering mechanism used in WAVE player we based our project on.
+We have created circular buffer - whole buffer is divided into N equal units. Two pointers are used - 
+`write_offset` and `read_offset`. `write_offset` indicates to which unit next part of decoded will be copied.
+`read_offset` indicates from which unit data will be transmitted via BSP functions.
+The rationale behind this was to load more data to buffer before BSP initialization and to have more data preloaded,
+so that there is always something to send whenever Transfer callbacks are invoked.
+
+We tested our buffer implementation on WAVE player. It worked perfectly for buffer size of 4, 8 or 16 
+(buffer size 2 worked as well, but setting that value means behaviour identical to previous implementation).
+Unfortunately, it hasn't improved FLAC playback, though some improvement was audible for simple sinusoidal wave.
