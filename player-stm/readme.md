@@ -1,4 +1,4 @@
-# STM32F407 FLAC Player
+# Experimental STM32F407 FLAC Player
 ## Overview
 Created as a project for Embedded Systems course (AGH UST).
 
@@ -6,7 +6,7 @@ After analysing multiple repositories created for this particular platform, it b
 
 FLAC, as a lossless format, does not suffer from this particular drawback and allows listener to enjoy music of high quality.
 
-This project is an attempt at creating a STM32F407 FLAC music player.
+This project is an attempt at creating an experimental STM32F407 FLAC music player.
 
 ## Used hardware, software and libraries
 * [STM32F407G-DISC1](https://download.kamami.pl/p561343-stm32f4disco-prod-spec.pdf) - target platform 
@@ -14,6 +14,10 @@ This project is an attempt at creating a STM32F407 FLAC music player.
 * [Moserial](https://wiki.gnome.org/action/show/Apps/Moserial?action=show&redirect=moserial#The_moserial_Project) - terminal for platform connectivity
 * [libFlac](https://xiph.org/flac/) - library used to decode FLAC files
 * [Audacity](https://audacity.pl/) - used to create FLAC files and analyse decoded samples
+
+## High level player flow
+
+![](./doc_res/flow.png)
 
 ## Project development
 
