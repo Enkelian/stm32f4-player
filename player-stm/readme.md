@@ -19,6 +19,33 @@ This project is an attempt at creating an experimental STM32F407 FLAC music play
 
 ![](./doc_res/flow.png)
 
+`Flac adapter` - an abstraction layer between FLAC library and BSP functions. Responsible for processing and passing output of libFLAC functions to the buffer used by BSP functions.
+
+## Crucial structures
+Following structs were used to provide such abstraction:
+```c
+typedef struct FlacAdapter {
+	Flac* flac;
+	FlacFrame* processed_frame;
+	int frame_offset;
+} FlacAdapter;
+```
+
+```c
+typedef struct FlacFrame {
+	int samples;
+	int size;
+	uint8_t *data;
+} FlacFrame;
+```
+```c
+typedef struct Flac {
+	FLAC__StreamDecoder* decoder;
+	FIL* input;
+	FIL* output;
+	FlacFrame* read_frame;
+} Flac;
+```
 ## Project development
 
 ### Creation of base project
